@@ -42,7 +42,7 @@ export default function Login() {
       return;
     }
 
-    navigate('/home', { replace: true });
+    navigate('/', { replace: true });
   }
 
   function FieldError({ name }) {
@@ -141,7 +141,7 @@ export default function Login() {
 
         <p className="auth-footer">
           Create account{' '}
-          <Link to="/" id="goto-signup-link">Sign Up</Link>
+          <Link to="/signup" id="goto-signup-link">Sign Up</Link>
         </p>
       </div>
     </AuthLayout>

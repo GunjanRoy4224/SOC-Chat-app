@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import '../index.css';
 import Sidebar from '../components/Sidebar';
-import ChatWindow, { chatData } from '../components/ChatWindow';
+import ChatWindow from '../components/ChatWindow';
 import ProfileView from '../components/ProfileView';
+import SettingsView from '../components/SettingsView';
+import CallsView from '../components/CallsView';
+import CommunityView from '../components/CommunityView';
 
 export default function Home() {
-  const [activeChatId,  setActiveChatId]  = useState(null);
-  const [messages,      setMessages]      = useState([]);
-  const [typingVisible, setTyping]        = useState(false);
-  const [theme,         setTheme]         = useState('light');
-  const [currentView,   setCurrentView]   = useState('chats');
+  const { roomId } = useParams();
+  const navigate = useNavigate();
+  
+  const [theme, setTheme] = useState('light');
+  const [currentView, setCurrentView] = useState('chats');
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -20,30 +24,28 @@ export default function Home() {
   }, [theme]);
 
   function handleSelectChat(id) {
-    setActiveChatId(id);
-    setMessages(chatData[id]?.messages ?? []);
-    setTyping(false);
     setCurrentView('chats');
+    navigate(`/room/${id}`);
   }
 
   function handleViewChange(view) {
     setCurrentView(view);
-    if (view !== 'chats') setActiveChatId(null);
+    if (view !== 'chats') navigate('/');
   }
 
   function handleBackClick() {
-    setActiveChatId(null);
-    setMessages([]);
-    setTyping(false);
+    navigate('/');
   }
 
   const showProfile = currentView === 'profile';
-  const showChat    = !showProfile;
+  const showSettings = currentView === 'settings';
+  const showCalls = currentView === 'calls';
+  const showCommunity = currentView === 'community';
 
   return (
     <div className="Pulse-app">
       <Sidebar
-        activeChatId={activeChatId}
+        activeChatId={roomId}
         onSelectChat={handleSelectChat}
         onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
         onViewChange={handleViewChange}
@@ -51,17 +53,19 @@ export default function Home() {
 
       <main
         className="right-panel"
-        style={{ display: window.innerWidth <= 768 && activeChatId === null && !showProfile ? 'none' : 'flex' }}
+        style={{ display: window.innerWidth <= 768 && !roomId && !showProfile && !showSettings && !showCalls && !showCommunity ? 'none' : 'flex' }}
       >
         {showProfile ? (
           <ProfileView />
+        ) : showSettings ? (
+          <SettingsView onBack={() => handleViewChange('chats')} />
+        ) : showCalls ? (
+          <CallsView />
+        ) : showCommunity ? (
+          <CommunityView />
         ) : (
           <ChatWindow
-            activeChatId={activeChatId}
-            messages={messages}
-            onNewMessages={updaterOrArray => setMessages(updaterOrArray)}
-            typingVisible={typingVisible}
-            onTyping={setTyping}
+            activeChatId={roomId}
             onBackClick={handleBackClick}
           />
         )}

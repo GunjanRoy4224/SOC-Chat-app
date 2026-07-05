@@ -6,6 +6,8 @@ import pulseLogo from '../assets/pulse-logo.png';
 
 export default function Signup() {
   const [email,           setEmail]           = useState('');
+  const [username,        setUsername]        = useState('');
+  const [mobileNumber,    setMobileNumber]    = useState('');
   const [password,        setPassword]        = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPass,        setShowPass]        = useState(false);
@@ -22,6 +24,16 @@ export default function Signup() {
       errors.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = 'Please enter a valid email address.';
+    }
+    if (!username.trim()) {
+      errors.username = 'Username is required.';
+    } else if (/\s/.test(username)) {
+      errors.username = 'Username cannot contain spaces.';
+    }
+    if (!mobileNumber.trim()) {
+      errors.mobileNumber = 'Mobile number is required.';
+    } else if (!/^\+?[1-9]\d{1,14}$/.test(mobileNumber)) {
+      errors.mobileNumber = 'Please enter a valid mobile number (E.164 format).';
     }
     if (!password) {
       errors.password = 'Password is required.';
@@ -43,7 +55,16 @@ export default function Signup() {
     if (!validate()) return;
 
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ 
+      email, 
+      password,
+      options: {
+        data: {
+          username,
+          mobile_number: mobileNumber
+        }
+      }
+    });
     setLoading(false);
 
     if (error) {
@@ -53,7 +74,7 @@ export default function Signup() {
 
     if (data.session) {
       setAlertMsg({ type: 'success', text: 'Account created! Redirecting…' });
-      setTimeout(() => navigate('/home', { replace: true }), 800);
+      setTimeout(() => navigate('/', { replace: true }), 800);
     } else {
       setAlertMsg({
         type: 'success',
@@ -112,6 +133,42 @@ export default function Signup() {
               />
             </div>
             <FieldError name="email" />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="signup-username" className="auth-label">Username</label>
+            <div className="auth-input-wrap">
+              <i className="fa-solid fa-at auth-input-icon" aria-hidden="true" />
+              <input
+                id="signup-username"
+                type="text"
+                className={`auth-input${fieldErrors.username ? ' error' : ''}`}
+                placeholder="unique_username"
+                value={username}
+                onChange={e => { setUsername(e.target.value); setFieldErrors(p => ({ ...p, username: '' })); }}
+                autoComplete="username"
+                aria-invalid={!!fieldErrors.username}
+              />
+            </div>
+            <FieldError name="username" />
+          </div>
+
+          <div className="auth-field">
+            <label htmlFor="signup-mobile" className="auth-label">Mobile Number</label>
+            <div className="auth-input-wrap">
+              <i className="fa-solid fa-phone auth-input-icon" aria-hidden="true" />
+              <input
+                id="signup-mobile"
+                type="tel"
+                className={`auth-input${fieldErrors.mobileNumber ? ' error' : ''}`}
+                placeholder="+1234567890"
+                value={mobileNumber}
+                onChange={e => { setMobileNumber(e.target.value); setFieldErrors(p => ({ ...p, mobileNumber: '' })); }}
+                autoComplete="tel"
+                aria-invalid={!!fieldErrors.mobileNumber}
+              />
+            </div>
+            <FieldError name="mobileNumber" />
           </div>
 
           <div className="auth-field">

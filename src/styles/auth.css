@@ -456,60 +456,11 @@
   to { transform: rotate(360deg); }
 }
 
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 8px 0;
-  animation: fadeSlideUp 0.5s var(--ease-smooth) 0.45s both;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--auth-input-border);
-}
-
 .auth-divider span {
   font-size: 12px;
   color: var(--auth-text-muted);
   font-weight: 600;
   white-space: nowrap;
-}
-
-.auth-google-btn {
-  width: 100%;
-  padding: 13px;
-  border: 1.5px solid var(--auth-input-border);
-  border-radius: var(--radius-pill);
-  background: #fff;
-  color: var(--auth-text-secondary);
-  font-family: var(--font-auth);
-  font-size: 14.5px;
-  font-weight: 600;
-  cursor: not-allowed;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  opacity: 0.5;
-  animation: fadeSlideUp 0.5s var(--ease-smooth) 0.5s both;
-}
-
-.auth-google-btn .google-icon {
-  font-size: 18px;
-  background: linear-gradient(135deg, #EA4335, #FBBC05, #34A853, #4285F4);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.google-coming-soon {
-  font-size: 11px;
-  color: var(--auth-text-muted);
-  margin-left: 4px;
 }
 
 .auth-footer {
@@ -545,22 +496,7 @@
   animation: fadeIn 0.3s ease;
 }
 
-.auth-loader-logo {
-  width: 72px;
-  height: 72px;
-  border-radius: 22px;
-  background: var(--pulse-gradient);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--auth-shadow-btn);
-  animation: loaderPulse 2s ease-in-out infinite;
-}
 
-.auth-loader-logo i {
-  font-size: 30px;
-  color: white;
-}
 
 @keyframes loaderPulse {
   0%, 100% { box-shadow: 0 4px 15px rgba(47, 128, 237, 0.40); }
@@ -592,27 +528,6 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-
-.password-strength { margin-top: 4px; }
-
-.strength-bar {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--auth-input-border);
-  overflow: hidden;
-}
-
-.strength-fill {
-  height: 100%;
-  border-radius: 2px;
-  transition: width 0.3s var(--ease-smooth), background 0.3s;
-}
-
-.strength-text {
-  font-size: 11.5px;
-  font-weight: 600;
-  margin-top: 4px;
 }
 
 @media (max-width: 480px) {

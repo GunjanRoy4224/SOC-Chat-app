@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables
+.env.local
+antigravity guide/Private_Messenger_Architecture_and_Negravity_Guide.md
+chat-app_mockup/
+

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 export default function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
+  // Show fullscreen loader while Supabase checks the session
   if (loading) {
     return (
       <div className="auth-fullscreen-loader">
@@ -16,7 +17,11 @@ export default function ProtectedRoute({ children }) {
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  // Not authenticated → redirect to login
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
+  // Authenticated → render the protected page
   return children;
 }

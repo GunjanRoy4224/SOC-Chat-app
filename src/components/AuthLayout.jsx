@@ -1,8 +1,10 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import '../styles/auth.css';
 
 export default function AuthLayout({ children }) {
   const { user, loading } = useAuth();
+
 
   if (loading) {
     return (
@@ -16,7 +18,10 @@ export default function AuthLayout({ children }) {
     );
   }
 
-  if (user) return <Navigate to="/home" replace />;
+  // Already authenticated → go straight to home
+  if (user) {
+    return <Navigate to="/home" replace />;
+  }
 
   return <div className="auth-page">{children}</div>;
 }

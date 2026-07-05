@@ -5,7 +5,7 @@ const EMOJIS = ['😀','😂','🥹','😍','🥰','😎','🤩','🥳','😅','
                  '🥴','🫠','🤗','🙏'];
 
 
-export default function MessageInput({ onSend, disabled }) {
+export default function MessageInput({ onSend, onTyping, disabled }) {
   const [text, setText]           = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [showAttach, setShowAttach] = useState(false);
@@ -21,6 +21,11 @@ export default function MessageInput({ onSend, disabled }) {
 
   function handleKey(e) {
     if (e.key === 'Enter') handleSend();
+  }
+  
+  function handleChange(e) {
+    setText(e.target.value);
+    if (onTyping) onTyping();
   }
 
   function insertEmoji(emoji) {
@@ -91,7 +96,7 @@ export default function MessageInput({ onSend, disabled }) {
             type="text"
             placeholder={disabled ? 'Select a chat to start messaging…' : 'Send a message...'}
             value={text}
-            onChange={e => setText(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKey}
             disabled={disabled}
           />
