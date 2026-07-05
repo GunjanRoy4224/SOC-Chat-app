@@ -45,7 +45,7 @@ export default function Login() {
     navigate('/', { replace: true });
   }
 
-  function FieldError({ name }) {
+  const renderError = (name) => {
     if (!fieldErrors[name]) return null;
     return (
       <span className="auth-error-msg" role="alert">
@@ -53,7 +53,7 @@ export default function Login() {
         {fieldErrors[name]}
       </span>
     );
-  }
+  };
 
   return (
     <AuthLayout>
@@ -94,7 +94,7 @@ export default function Login() {
                 aria-invalid={!!fieldErrors.email}
               />
             </div>
-            <FieldError name="email" />
+            {renderError('email')}
           </div>
 
           <div className="auth-field">
@@ -115,7 +115,7 @@ export default function Login() {
                 <i className={`fa-solid ${showPass ? 'fa-eye-slash' : 'fa-eye'}`} />
               </button>
             </div>
-            <FieldError name="password" />
+            {renderError('password')}
           </div>
 
           <div className="auth-forgot-row">

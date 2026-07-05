@@ -83,7 +83,7 @@ export default function Signup() {
     }
   }
 
-  function FieldError({ name }) {
+  const renderError = (name) => {
     if (!fieldErrors[name]) return null;
     return (
       <span className="auth-error-msg" role="alert">
@@ -91,7 +91,7 @@ export default function Signup() {
         {fieldErrors[name]}
       </span>
     );
-  }
+  };
 
   return (
     <AuthLayout>
@@ -132,7 +132,7 @@ export default function Signup() {
                 aria-invalid={!!fieldErrors.email}
               />
             </div>
-            <FieldError name="email" />
+            {renderError('email')}
           </div>
 
           <div className="auth-field">
@@ -150,7 +150,7 @@ export default function Signup() {
                 aria-invalid={!!fieldErrors.username}
               />
             </div>
-            <FieldError name="username" />
+            {renderError('username')}
           </div>
 
           <div className="auth-field">
@@ -168,7 +168,7 @@ export default function Signup() {
                 aria-invalid={!!fieldErrors.mobileNumber}
               />
             </div>
-            <FieldError name="mobileNumber" />
+            {renderError('mobileNumber')}
           </div>
 
           <div className="auth-field">
@@ -189,7 +189,7 @@ export default function Signup() {
                 <i className={`fa-solid ${showPass ? 'fa-eye-slash' : 'fa-eye'}`} />
               </button>
             </div>
-            <FieldError name="password" />
+            {renderError('password')}
           </div>
 
           <div className="auth-field">
@@ -210,7 +210,7 @@ export default function Signup() {
                 <i className={`fa-solid ${showConfirmPass ? 'fa-eye-slash' : 'fa-eye'}`} />
               </button>
             </div>
-            <FieldError name="confirmPassword" />
+            {renderError('confirmPassword')}
           </div>
 
           <button id="signup-submit-btn" type="submit" className="auth-btn" disabled={loading}>

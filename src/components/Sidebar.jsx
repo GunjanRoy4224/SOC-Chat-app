@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { generateAESKey, encryptRoomKey } from '../lib/crypto';
+import NewGroupModal from './NewGroupModal';
 
 const Filters = ['all', 'unread', 'groups', 'fav'];
 
@@ -11,6 +12,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
   const [activeFilter, setFilter]    = useState('all');
   const [menuOpen,     setMenuOpen]  = useState(false);
   const [activeNav,    setActiveNav] = useState('chats');
+  const [showNewGroup, setShowNewGroup] = useState(false);
   
   const [rooms, setRooms] = useState([]);
   const [loadingRooms, setLoadingRooms] = useState(true);
@@ -35,6 +37,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
           rooms (
             id,
             type,
+            name,
+            avatar_url,
             created_at,
             room_participants (
               user_id,
@@ -50,29 +54,60 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
         .eq('user_id', user.id);
         
       if (data && !error) {
+        const roomIds = data.map(rp => rp.room_id);
+        
+        // Fetch recent messages to find the last message per room
+        const { data: recentMessages } = await supabase
+          .from('messages')
+          .select('room_id, text, type, timestamp, is_read, sender_id')
+          .in('room_id', roomIds)
+          .order('timestamp', { ascending: false })
+          .limit(500); // Hack to get recent messages without a SQL View
+
+        const lastMessages = {};
+        const unreadCounts = {};
+        
+        if (recentMessages) {
+          for (const msg of recentMessages) {
+            if (!lastMessages[msg.room_id]) {
+              lastMessages[msg.room_id] = msg;
+            }
+            if (!msg.is_read && msg.sender_id !== user.id) {
+              unreadCounts[msg.room_id] = (unreadCounts[msg.room_id] || 0) + 1;
+            }
+          }
+        }
+
         const formatted = data.map(rp => {
           const room = rp.rooms;
           const others = room.room_participants.filter(p => p.user_id !== user.id).map(p => p.users);
           
           let name = 'Empty Room';
           if (room.type === 'direct') {
-            name = others[0]?.username || 'Unknown User';
+            name = others[0]?.username || (room.room_participants.length === 1 ? `${user.user_metadata?.username || 'Me'} (You)` : 'Unknown User');
           } else {
-            name = others.map(u => u.username).join(', ') || 'Group Chat';
+            name = room.name || others.map(u => u.username).join(', ') || 'Group Chat';
           }
           
+          const lastMsg = lastMessages[room.id];
+          // Note: text is encrypted, so we can't easily show the decrypted preview in Sidebar without loading the aes keys here.
+          // For now, we will show "Encrypted Message" or media type.
+          let preview = lastMsg ? (lastMsg.type === 'text' ? 'Encrypted Message' : lastMsg.type) : '';
+
           return {
             id: room.id,
             name,
             type: room.type === 'direct' ? 'all' : 'groups',
             initials: name.substring(0, 2).toUpperCase(),
-            time: new Date(room.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            otherUserIds: others.map(o => o.id)
+            time: lastMsg ? new Date(lastMsg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(room.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            lastTimestamp: lastMsg ? new Date(lastMsg.timestamp).getTime() : new Date(room.created_at).getTime(),
+            otherUserIds: others.map(o => o.id),
+            preview,
+            unread: unreadCounts[room.id] || 0
           };
         });
         
-        // Sort rooms by created_at desc for now (latest first)
-        formatted.sort((a,b) => new Date(b.time) - new Date(a.time));
+        formatted.sort((a,b) => b.lastTimestamp - a.lastTimestamp);
         setRooms(formatted);
       }
       setLoadingRooms(false);
@@ -114,7 +149,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
   async function handleCreateDirectChat(targetUser) {
     setCreatingChat(true);
     // Check if room already exists
-    const existingRoom = rooms.find(r => r.type === 'all' && r.otherUserIds.includes(targetUser.id));
+    const existingRoom = rooms.find(r => r.type === 'all' && (targetUser.id === user.id ? r.otherUserIds.length === 0 : r.otherUserIds.includes(targetUser.id)));
     if (existingRoom) {
       onSelectChat(existingRoom.id);
       setShowNewChat(false);
@@ -135,13 +170,19 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
       
       const roomAesKey = await generateAESKey();
       const myEncryptedKey = await encryptRoomKey(roomAesKey, myUser?.public_key);
-      const targetEncryptedKey = await encryptRoomKey(roomAesKey, fullTargetUser?.public_key);
 
       // Add participants
-      await supabase.from('room_participants').insert([
-        { room_id: newRoom.id, user_id: user.id, is_admin: true, encrypted_room_key: myEncryptedKey },
-        { room_id: newRoom.id, user_id: targetUser.id, is_admin: false, encrypted_room_key: targetEncryptedKey }
-      ]);
+      if (user.id === targetUser.id) {
+        await supabase.from('room_participants').insert([
+          { room_id: newRoom.id, user_id: user.id, is_admin: true, encrypted_room_key: myEncryptedKey }
+        ]);
+      } else {
+        const targetEncryptedKey = await encryptRoomKey(roomAesKey, fullTargetUser?.public_key);
+        await supabase.from('room_participants').insert([
+          { room_id: newRoom.id, user_id: user.id, is_admin: true, encrypted_room_key: myEncryptedKey },
+          { room_id: newRoom.id, user_id: targetUser.id, is_admin: false, encrypted_room_key: targetEncryptedKey }
+        ]);
+      }
       
       setShowNewChat(false);
       onSelectChat(newRoom.id);
@@ -174,8 +215,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
           <span className="logo-text">Pulse</span>
         </div>
         <div className="sidebar-header-icons">
-          <button className="icon-btn" title="New Chat" onClick={() => setShowNewChat(true)}>
-            <i className="fa-solid fa-plus" />
+          <button className="icon-btn" title="New Group" onClick={() => setShowNewGroup(true)}>
+            <i className="fa-solid fa-users" />
           </button>
           <button
             className="icon-btn"
@@ -190,7 +231,7 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
         {menuOpen && (
           <div className="dropdown-menu" id="sidebarDropdown">
             <div className="dd-item" onClick={() => { setShowNewChat(true); setMenuOpen(false); }}><i className="fa-solid fa-user-plus" />New Chat</div>
-            <div className="dd-item" onClick={() => { setMenuOpen(false); }}><i className="fa-solid fa-star" />My Chat</div>
+            <div className="dd-item" onClick={() => { handleCreateDirectChat(user); setMenuOpen(false); }}><i className="fa-solid fa-star" />My Chat</div>
             <div className="dd-item" onClick={() => { onToggleTheme(); setMenuOpen(false); }}>
               <i className="fa-solid fa-moon" />Theme
             </div>
@@ -236,6 +277,16 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
              )}
            </ul>
         </div>
+      )}
+
+      {showNewGroup && (
+        <NewGroupModal 
+          onClose={() => setShowNewGroup(false)}
+          onGroupCreated={(id) => {
+            setShowNewGroup(false);
+            onSelectChat(id);
+          }}
+        />
       )}
 
       {/* Search */}
@@ -298,8 +349,15 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
                   <span className="card-name">{c.name}</span>
                   <span className="card-time">{c.time}</span>
                 </div>
-                <div className="card-row">
-                  <span className="card-preview">{c.type === 'groups' ? 'Group Chat' : 'Direct Message'}</span>
+                <div className="card-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span className="card-preview" style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', paddingRight: '10px' }}>
+                    {c.preview || (c.type === 'groups' ? 'Group Chat' : 'Direct Message')}
+                  </span>
+                  {c.unread > 0 && (
+                    <span style={{ background: 'var(--accent)', color: '#fff', fontSize: '11px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '10px' }}>
+                      {c.unread}
+                    </span>
+                  )}
                 </div>
               </div>
             </li>

@@ -16,10 +16,11 @@ export default function Home() {
   const [currentView, setCurrentView] = useState('chats');
 
   useEffect(() => {
+    localStorage.setItem('theme', theme);
     if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
+      document.body.setAttribute('data-theme', 'dark');
     } else {
-      document.documentElement.removeAttribute('data-theme');
+      document.body.removeAttribute('data-theme');
     }
   }, [theme]);
 
@@ -30,7 +31,6 @@ export default function Home() {
 
   function handleViewChange(view) {
     setCurrentView(view);
-    if (view !== 'chats') navigate('/');
   }
 
   function handleBackClick() {
@@ -53,7 +53,12 @@ export default function Home() {
 
       <main
         className="right-panel"
-        style={{ display: window.innerWidth <= 768 && !roomId && !showProfile && !showSettings && !showCalls && !showCommunity ? 'none' : 'flex' }}
+        style={{ 
+          flex: 1,
+          flexDirection: 'column',
+          minWidth: 0,
+          display: window.innerWidth <= 768 && !roomId && !showProfile && !showSettings && !showCalls && !showCommunity ? 'none' : 'flex' 
+        }}
       >
         {showProfile ? (
           <ProfileView />

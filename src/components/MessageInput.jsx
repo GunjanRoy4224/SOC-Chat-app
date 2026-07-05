@@ -1,130 +1,90 @@
-import { useState } from 'react';
-
-const EMOJIS = ['😀','😂','🥹','😍','🥰','😎','🤩','🥳','😅','😭','😤','🤔','💀',
-                 '🔥','❤️','🎉','👍','🙌','💪','🫶','🌟','✨','💯','🎊','🏆','😜',
-                 '🥴','🫠','🤗','🙏'];
-
+import { useState, useRef } from 'react';
+import Picker from 'emoji-picker-react';
 
 export default function MessageInput({ onSend, onTyping, disabled }) {
-  const [text, setText]           = useState('');
+  const [msg, setMsg] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
-  const [showAttach, setShowAttach] = useState(false);
+  const fileInputRef = useRef(null);
 
-  function handleSend() {
-    const trimmed = text.trim();
-    if (!trimmed || disabled) return;
-    onSend(trimmed);
-    setText('');
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (!msg.trim()) return;
+    onSend(msg, null); // text only
+    setMsg('');
     setShowEmoji(false);
-    setShowAttach(false);
   }
 
-  function handleKey(e) {
-    if (e.key === 'Enter') handleSend();
-  }
-  
-  function handleChange(e) {
-    setText(e.target.value);
-    if (onTyping) onTyping();
+  function handleFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    // Check size limit (20MB)
+    if (file.size > 20 * 1024 * 1024) {
+      alert("File is too large. Please select a file under 20MB.");
+      e.target.value = '';
+      return;
+    }
+    
+    onSend('', file);
+    e.target.value = '';
+    setShowEmoji(false);
   }
 
-  function insertEmoji(emoji) {
-    setText(prev => prev + emoji);
+  function handleEmojiClick(emojiObj) {
+    setMsg(prev => prev + emojiObj.emoji);
   }
 
   return (
-    <div style={{ position: 'relative' }}>
-
-      {/* popup */}
-      {showAttach && (
-        <div className="attach-popup" id="attachPopup">
-          <div className="attach-grid">
-            {[
-              { icon: 'fa-image',               color: '#2196f3', label: 'Photo / Video' },
-              { icon: 'fa-file-alt',             color: '#ff9800', label: 'Docs'         },
-              { icon: 'fa-music',                color: '#e91e63', label: 'Audio'        },
-              { icon: 'fa-square-poll-vertical', color: '#9c27b0', label: 'Poll'         },
-              { icon: 'fa-location-dot',         color: '#4caf50', label: 'Location'     },
-            ].map(item => (
-              <button
-                key={item.label}
-                className="attach-tile"
-                onClick={() => setShowAttach(false)}
-              >
-                <i className={`fa-solid ${item.icon}`} style={{ color: item.color }} />
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Emoji */}
+    <div className="chat-input-bar">
       {showEmoji && (
-        <div className="emoji-panel" id="emojiPanel">
-          <div className="emoji-scroll">
-            {EMOJIS.map(e => (
-              <span
-                key={e}
-                style={{ cursor: 'pointer' }}
-                onClick={() => insertEmoji(e)}
-              >
-                {e}
-              </span>
-            ))}
-          </div>
+        <div style={{ position: 'absolute', bottom: '100%', left: 0, zIndex: 50, marginBottom: '10px' }}>
+          <Picker onEmojiClick={handleEmojiClick} theme="dark" />
         </div>
       )}
+      
+      <button 
+        className="icon-btn input-icon-btn" 
+        type="button"
+        onClick={() => setShowEmoji(v => !v)}
+        disabled={disabled}
+      >
+        <i className="fa-regular fa-face-smile" />
+      </button>
 
-      {/* Input bar */}
-      <div className="chat-input-bar">
-        {/* Attach button */}
-        <button
-          className="input-icon-btn"
-          id="attachBtn"
-          title="Attach"
-          onClick={e => { e.stopPropagation(); setShowAttach(o => !o); setShowEmoji(false); }}
-          disabled={disabled}
-        >
-          <i className="fa-solid fa-plus" />
-        </button>
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        style={{ display: 'none' }} 
+        onChange={handleFileChange}
+        disabled={disabled}
+      />
+      <button 
+        className="icon-btn attach-btn" 
+        type="button"
+        disabled={disabled}
+        onClick={() => { setShowEmoji(false); fileInputRef.current?.click(); }}
+      >
+        <i className="fa-solid fa-paperclip" />
+      </button>
 
-        {/* Text input + emoji + camera */}
+      <form onSubmit={handleSubmit} style={{ display: 'flex', flex: 1, gap: '10px' }}>
         <div className="input-field-wrap">
           <input
-            id="msgInput"
             type="text"
-            placeholder={disabled ? 'Select a chat to start messaging…' : 'Send a message...'}
-            value={text}
-            onChange={handleChange}
-            onKeyDown={handleKey}
+            className="msg-input"
+            placeholder="Type a message"
+            value={msg}
             disabled={disabled}
+            onChange={e => {
+              setMsg(e.target.value);
+              onTyping && onTyping();
+            }}
           />
-          <button
-            className="emoji-btn"
-            id="emojiBtn"
-            title="Emoji"
-            onClick={e => { e.stopPropagation(); setShowEmoji(o => !o); setShowAttach(false); }}
-            disabled={disabled}
-          >
-            <i className="fa-regular fa-face-smile" />
-          </button>
-          <button className="input-icon-btn cam-btn" title="Camera" disabled={disabled}>
-            <i className="fa-solid fa-camera" />
-          </button>
         </div>
-
-        {/* Send button */}
-        <button
-          className="send-btn"
-          id="sendBtn"
-          title="Send"
-          onClick={handleSend}
-          disabled={disabled}
-        >
-          <i className="fa-solid fa-arrow-right" />
+        <button type="submit" className="send-btn" disabled={disabled || !msg.trim()}>
+          <i className="fa-solid fa-paper-plane" />
         </button>
-      </div>
+      </form>
     </div>
   );
 }

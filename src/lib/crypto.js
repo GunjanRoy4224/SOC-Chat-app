@@ -148,3 +148,58 @@ export async function decryptMessage(encryptedString, aesKeyBase64) {
     return "[Encrypted Message]";
   }
 }
+
+export async function encryptFile(arrayBuffer, aesKeyBase64) {
+  if (!aesKeyBase64) return arrayBuffer;
+  const keyBuffer = base64ToArrayBuffer(aesKeyBase64);
+  const key = await window.crypto.subtle.importKey(
+    "raw",
+    keyBuffer,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt"]
+  );
+
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const ciphertext = await window.crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: iv },
+    key,
+    arrayBuffer
+  );
+
+  const combined = new Uint8Array(12 + ciphertext.byteLength);
+  combined.set(iv, 0);
+  combined.set(new Uint8Array(ciphertext), 12);
+
+  return combined.buffer;
+}
+
+export async function decryptFile(arrayBuffer, aesKeyBase64) {
+  try {
+    if (!aesKeyBase64) return arrayBuffer;
+    
+    const combined = new Uint8Array(arrayBuffer);
+    const iv = combined.slice(0, 12);
+    const ciphertext = combined.slice(12);
+
+    const keyBuffer = base64ToArrayBuffer(aesKeyBase64);
+    const key = await window.crypto.subtle.importKey(
+      "raw",
+      keyBuffer,
+      { name: "AES-GCM" },
+      false,
+      ["decrypt"]
+    );
+
+    const decryptedBuffer = await window.crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: iv },
+      key,
+      ciphertext
+    );
+
+    return decryptedBuffer;
+  } catch (err) {
+    console.error("Failed to decrypt file", err);
+    return null;
+  }
+}

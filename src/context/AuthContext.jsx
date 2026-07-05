@@ -38,7 +38,19 @@ export function AuthProvider({ children }) {
           console.log("Generating new RSA keys for E2E encryption...");
           const { publicKey, privateKey } = await generateRSAKeyPair();
           localStorage.setItem(`pulse_priv_key_${user.id}`, privateKey);
-          await supabase.from('users').update({ public_key: publicKey }).eq('id', user.id);
+          
+          const { data: existingUser } = await supabase.from('users').select('id').eq('id', user.id).single();
+          if (existingUser) {
+            await supabase.from('users').update({ public_key: publicKey }).eq('id', user.id);
+          } else {
+            await supabase.from('users').insert({
+              id: user.id,
+              email: user.email,
+              username: user.user_metadata?.username || 'Unknown',
+              mobile_number: user.user_metadata?.mobile_number || 'Unknown',
+              public_key: publicKey
+            });
+          }
         } catch(err) {
           console.error("Failed to generate RSA keys", err);
         }
