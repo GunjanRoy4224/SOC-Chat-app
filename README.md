@@ -1,38 +1,60 @@
-# Pulse — Real-Time Chat Application
+# Pulse — Secure Real-Time Communication Platform
 
-**Pulse** is a sleek, modern, and secure messaging application built for the **Season of Code (SOC)**. Built on **React 19** and **Vite**, and integrated with **Supabase** for secure authentication, Pulse offers a premium user experience with elegant styling, real-time-like simulations, and multi-view navigation.
-
----
-
-## 🚀 Features
-
-### 🔐 Secure Authentication & Route Protection
-- **User Signup & Login:** Email-based account registration and login powered by **Supabase Auth**.
-- **Interactive Validation:** Inline error reporting for email validation, password length, and matching credentials.
-- **Route Guarding:** A custom [ProtectedRoute](file:///C:/Users/gunjan/Desktop/chat-app/src/components/ProtectedRoute.jsx) component prevents unauthenticated access to the main dashboard `/home`.
-
-### 💬 Rich Chat Experience
-- **Simulated Conversational AI:** Send messages to contacts and watch them type and respond dynamically with automated replies.
-- **Typing Indicator:** Smooth micro-animations showing typing activity before messages are received.
-- **Modern Message Bubbles:** Styled text bubbles differentiating sent and received messages with timestamps.
-- **Quick Filters:** Instantly filter chats using tabs: *All*, *Unread*, *Groups*, and *Favorites (Fav)*.
-- **Real-Time Search:** Instantly find conversations and contacts by name.
-
-### 🎨 Premium UI & Design
-- **Theme Switching:** Sleek **Light** and **Dark** theme compatibility powered by CSS variables.
-- **Responsive Layout:** Adaptive sidebar and chat screen transitions optimised for both desktop and mobile viewports.
-- **Rich Aesthetics:** Dark modes, modern typography, glassmorphism, responsive navigation bars, and smooth transitions.
+**Pulse** is a sleek, modern, and highly secure real-time messaging application built for the **Season of Code (SOC)**. Built on **React 19** and **Vite**, and powered by **Supabase**, Pulse delivers a premium user experience with elegant aesthetics, end-to-end encryption, WebRTC-based voice calls, and robust offline capabilities.
 
 ---
 
-## 🛠️ Tech Stack
+## 🚀 Key Features
+
+### 🔐 Uncompromising Security & Privacy
+- **End-to-End Encryption (E2EE):** All messages and shared files are encrypted client-side using the Web Crypto API (RSA & AES algorithms), ensuring that only intended recipients can read them.
+- **Secure Authentication:** Robust user registration, login, and session management powered by **Supabase Auth**.
+- **Protected Routes:** Comprehensive route guarding prevents unauthenticated access to the main dashboard and sensitive areas.
+
+### 💬 Advanced Real-Time Messaging
+- **Instant Delivery:** Sub-second message broadcasting across devices utilizing **Supabase Realtime Channels**.
+- **Media & File Sharing:** Securely upload and share encrypted images, videos, audio, and documents.
+- **Typing Indicators & Read Receipts:** Real-time micro-animations displaying typing activity and message read status.
+- **Message Interactions:** Reply to specific messages to maintain context, and delete messages (with real-time optimistic UI updates).
+- **Offline Support:** Local message caching via `localforage` (IndexedDB) ensures you can read past conversations even without an internet connection.
+
+### 📞 WebRTC Voice & Video Calls
+- **Peer-to-Peer Calling:** High-quality voice calling built directly into the app using **WebRTC**.
+- **Real-Time Signaling:** Custom signaling mechanism leveraging Supabase Channels.
+- **Call Logs:** Comprehensive history of incoming, outgoing, and missed calls integrated directly into a dedicated "Calls" view.
+
+### 👥 Groups & Community
+- **Group Chats:** Create multi-user channels with dynamic participant management.
+- **Community View:** Dedicated spaces for larger communities and discussions.
+
+### 🎨 Premium UI & Experience
+- **Modern Aesthetics:** Features glassmorphism, responsive navigation bars, and smooth micro-animations.
+- **Theme Engine:** Seamless switching between elegant **Light** and **Dark** modes via CSS variables.
+- **Rich Interactivity:** Integrated emoji picker (`emoji-picker-react`), responsive sidebars, dropdown menus, and dynamic message bubbles with timestamps.
+
+---
+
+## 🏗️ Architecture & Design
+
+Pulse follows a modern, component-driven architecture:
+
+- **State Management:** React Context (`AuthContext`) is used to manage and distribute global authentication state and online user presence.
+- **Real-Time Synchronization:** Subscriptions to Supabase PostgreSQL changes and broadcast channels keep the UI instantly updated across multiple clients.
+- **Cryptography Layer:** A dedicated `crypto.js` library handles key pair generation, room key distribution, and AES-GCM encryption/decryption for messages and files.
+- **Modular Hooks:** Complex logic, such as WebRTC connection handling, is abstracted into custom hooks (`useWebRTC.js`) for clean components.
+
+---
+
+## 🛠️ Technology Stack
 
 - **Core Framework:** [React (v19)](https://react.dev/)
-- **Build Tool:** [Vite (v8)](https://vite.dev/)
+- **Build System:** [Vite (v8)](https://vite.dev/)
 - **Routing:** [React Router DOM (v7)](https://reactrouter.com/)
-- **Backend-as-a-Service:** [Supabase](https://supabase.com/) (Authentication & Client setup)
-- **Styling:** Custom Vanilla CSS (located in [index.css](file:///C:/Users/gunjan/Desktop/chat-app/src/index.css))
-- **Icons:** FontAwesome (v6+)
+- **Backend-as-a-Service:** [Supabase](https://supabase.com/) (PostgreSQL, Auth, Storage, Realtime)
+- **Cryptography:** Web Crypto API (`SubtleCrypto`)
+- **Offline Storage:** [localForage](https://localforage.github.io/localForage/)
+- **Styling:** Custom Vanilla CSS with a comprehensive design system
+- **Icons & Assets:** FontAwesome (v6+), Emoji Picker React
 
 ---
 
@@ -42,39 +64,45 @@
 chat-app/
 ├── public/                 # Static assets
 ├── src/
-│   ├── assets/             # Images & Logos (e.g. pulse-logo.png)
+│   ├── assets/             # Images & Logos
 │   ├── components/         # Reusable React UI Components
-│   │   ├── AuthLayout.jsx      # Core wrapper layout for Login/Signup
-│   │   ├── ChatWindow.jsx      # Message viewport & response simulation
-│   │   ├── MessageBubble.jsx   # Individual message layout with status/time
-│   │   ├── MessageInput.jsx    # Text input, emojis, and send action
-│   │   ├── ProfileView.jsx     # User settings, information edit, and Logout
-│   │   ├── ProtectedRoute.jsx  # Route protector using AuthContext
-│   │   └── Sidebar.jsx         # Chat listing, filters, search, and navigation
-│   ├── context/            # React Contexts
-│   │   └── AuthContext.jsx     # Global authentication state provider
-│   ├── lib/                # Third-party configurations
+│   │   ├── AuthLayout.jsx      # Wrapper for Login/Signup screens
+│   │   ├── CallsView.jsx       # Dedicated call history interface
+│   │   ├── ChatWindow.jsx      # Real-time messaging viewport with E2EE
+│   │   ├── CommunityView.jsx   # Public/Group community spaces
+│   │   ├── MessageBubble.jsx   # Individual message component (text/media)
+│   │   ├── MessageInput.jsx    # Text input with emoji and file attachments
+│   │   ├── ProfileView.jsx     # User settings and profile management
+│   │   ├── ProtectedRoute.jsx  # Route protector
+│   │   ├── SettingsView.jsx    # App configuration (themes, etc.)
+│   │   └── Sidebar.jsx         # Navigation, recent chats, and search
+│   ├── context/            # React Contexts (AuthContext)
+│   ├── hooks/              # Custom React Hooks
+│   │   └── useWebRTC.js        # WebRTC peer connection & signaling logic
+│   ├── lib/                # Core Services & Utilities
+│   │   ├── crypto.js           # E2EE cryptographic functions
+│   │   ├── storage.js          # localForage wrapper for offline caching
 │   │   └── supabase.js         # Supabase Client Initialization
-│   ├── pages/              # Application View Pages
-│   │   ├── Home.jsx            # Main app wrapper (Sidebar + ChatWindow / ProfileView)
-│   │   ├── Login.jsx           # Sign in page
-│   │   └── Signup.jsx          # Register account page
+│   ├── pages/              # Application Routes
+│   │   ├── Home.jsx            # Main dashboard wrapper
+│   │   ├── Login.jsx           # Sign in view
+│   │   └── Signup.jsx          # Registration view
 │   ├── App.jsx             # Main routing registry
-│   ├── index.css           # Styling system & theme definitions
-│   └── main.jsx            # React application entry point
-├── package.json            # Node dependencies and project scripts
-└── vite.config.js          # Vite compilation settings
+│   ├── index.css           # Global design system & theme definitions
+│   └── main.jsx            # Application entry point
+├── package.json            # Dependencies and scripts
+└── vite.config.js          # Vite configuration
 ```
 
 ---
 
 ## ⚙️ Installation & Setup
 
-Follow these steps to run the project locally:
+Follow these steps to run the Pulse client locally:
 
 ### 1. Prerequisites
-- Make sure you have [Node.js](https://nodejs.org/) installed (version 18+ recommended).
-- A [Supabase](https://supabase.com/) account and project.
+- **Node.js**: Version 18+ is recommended.
+- **Supabase Account**: A configured Supabase project.
 
 ### 2. Clone the Repository
 ```bash
@@ -88,21 +116,25 @@ npm install
 ```
 
 ### 4. Supabase Configuration
-The application is pre-configured with a default demo Supabase project in [supabase.js](file:///C:/Users/gunjan/Desktop/chat-app/src/lib/supabase.js). 
+To connect the application to your backend:
+1. Create a `.env.local` file in the root directory.
+2. Add your Supabase project URL and Anon Key:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+*(Alternatively, update `src/lib/supabase.js` directly if using hardcoded environment variables.)*
 
-To connect to your own Supabase project:
-1. Open [supabase.js](file:///C:/Users/gunjan/Desktop/chat-app/src/lib/supabase.js).
-2. Replace `supabaseUrl` and `supabaseAnonKey` with your own project credentials from your Supabase dashboard (**Project Settings** -> **API**).
-
-### 5. Run the Local Development Server
+### 5. Run the Development Server
 ```bash
 npm run dev
 ```
-Once the dev server starts, open [http://localhost:5173](http://localhost:5173) in your browser.
+Open [http://localhost:5173](http://localhost:5173) in your browser to start chatting.
 
 ---
 
-## 🔮 Future Enhancements
-- **Persistent Database Storage:** Connect messaging states to Supabase PostgreSQL instead of mock states.
-- **Supabase Realtime:** Enable instantaneous text broadcasting across different devices/browsers.
-- **Live Calls & Community:** Enable functional audio calling and community group setups.
+## 🔮 Future Roadmap
+- **Video Calling Integration:** Extend the existing WebRTC audio implementation to support high-definition video calls.
+- **Push Notifications:** Implement service workers to receive offline alerts for new messages and incoming calls.
+- **Advanced Message Search:** Full-text server-side search across all encrypted messages.
+- **Themes Marketplace:** Allow users to upload and share custom CSS styling themes.

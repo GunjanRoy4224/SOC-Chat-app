@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { generateAESKey, encryptRoomKey } from '../lib/crypto';
 import NewGroupModal from './NewGroupModal';
+import pulseLogo from '../assets/pulse-logo.png';
 
-const Filters = ['all', 'unread', 'groups', 'fav'];
+const Filters = ['all', 'unread'];
 
 export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onViewChange }) {
   const [searchQ,      setSearchQ]   = useState('');
@@ -122,8 +123,15 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
       })
       .subscribe();
 
+    const msgSub = supabase.channel('sidebar_messages')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+         loadRooms();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(subscription);
+      supabase.removeChannel(msgSub);
     };
   }, [user]);
 
@@ -191,7 +199,10 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
   }
 
   const visible = rooms.filter(con => {
-    const matchFilter = activeFilter === 'all' || con.type === activeFilter;
+    const matchFilter = 
+      activeFilter === 'all' || 
+      (activeFilter === 'unread' && con.unread > 0) || 
+      (activeFilter === 'groups' && con.type === 'groups');
     const matchSearch = con.name.toLowerCase().includes(searchQ.toLowerCase());
     return matchFilter && matchSearch;
   });
@@ -211,7 +222,8 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
     <aside className="sidebar" id="sidebar">
       {/* Header */}
       <div className="sidebar-header">
-        <div className="sidebar-logo">
+        <div className="sidebar-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src={pulseLogo} alt="Pulse" style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />
           <span className="logo-text">Pulse</span>
         </div>
         <div className="sidebar-header-icons">
@@ -370,19 +382,35 @@ export default function Sidebar({ activeChatId, onSelectChat, onToggleTheme, onV
         {[
           { view: 'chats',     icon: 'fa-message',      label: 'Chats'     },
           { view: 'calls',     icon: 'fa-phone',        label: 'Calls'     },
-          { view: 'community', icon: 'fa-people-group', label: 'Community' },
+          { view: 'groups',    icon: 'fa-users',        label: 'Groups'    },
           { view: 'profile',   icon: 'fa-user',         label: 'Profile'   },
-        ].map(item => (
+        ].map(item => {
+          const isActive = 
+            (item.view === 'chats' && activeNav === 'chats' && activeFilter !== 'groups') ||
+            (item.view === 'groups' && activeFilter === 'groups') ||
+            (item.view === activeNav && item.view !== 'chats' && item.view !== 'groups');
+            
+          return (
           <button
             key={item.view}
-            className={`nav-btn${activeNav === item.view ? ' active' : ''}`}
+            className={`nav-btn${isActive ? ' active' : ''}`}
             title={item.label}
-            onClick={() => handleNavClick(item.view)}
+            onClick={() => {
+              if (item.view === 'groups') {
+                 setFilter('groups');
+                 handleNavClick('chats');
+              } else if (item.view === 'chats') {
+                 setFilter('all');
+                 handleNavClick('chats');
+              } else {
+                 handleNavClick(item.view);
+              }
+            }}
           >
             <i className={`fa-solid ${item.icon}`} />
             <span>{item.label}</span>
           </button>
-        ))}
+        )})}
       </nav>
     </aside>
   );

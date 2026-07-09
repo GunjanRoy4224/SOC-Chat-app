@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import '../styles/auth.css';
+import '../index.css';
 
 export default function AuthLayout({ children }) {
   const { user, loading } = useAuth();

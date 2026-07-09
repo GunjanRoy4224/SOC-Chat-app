@@ -125,7 +125,7 @@ export default function MessageBubble({ msg, isSent, time, roomAesKey, onReply, 
       </div>
       <div className="msg-meta">
         <span className="msg-time">{time}</span>
-        {isSent && <i className={`fa-solid fa-check-double msg-status ${msg.is_read ? 'read' : ''}`} />}
+        {isSent && <i className={`fa-solid ${msg.is_read ? 'fa-check-double read' : 'fa-check'} msg-status`} />}
       </div>
     </div>
   );

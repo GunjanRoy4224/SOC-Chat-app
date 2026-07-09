@@ -4,6 +4,7 @@ import Picker from 'emoji-picker-react';
 export default function MessageInput({ onSend, onTyping, disabled }) {
   const [msg, setMsg] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
+  const [showAttachPopup, setShowAttachPopup] = useState(false);
   const fileInputRef = useRef(null);
 
   function handleSubmit(e) {
@@ -12,6 +13,7 @@ export default function MessageInput({ onSend, onTyping, disabled }) {
     onSend(msg, null); // text only
     setMsg('');
     setShowEmoji(false);
+    setShowAttachPopup(false);
   }
 
   function handleFileChange(e) {
@@ -28,6 +30,7 @@ export default function MessageInput({ onSend, onTyping, disabled }) {
     onSend('', file);
     e.target.value = '';
     setShowEmoji(false);
+    setShowAttachPopup(false);
   }
 
   function handleEmojiClick(emojiObj) {
@@ -45,11 +48,42 @@ export default function MessageInput({ onSend, onTyping, disabled }) {
       <button 
         className="icon-btn input-icon-btn" 
         type="button"
-        onClick={() => setShowEmoji(v => !v)}
+        onClick={() => { setShowEmoji(v => !v); setShowAttachPopup(false); }}
         disabled={disabled}
       >
         <i className="fa-regular fa-face-smile" />
       </button>
+
+      {showAttachPopup && (
+        <div className="attach-popup">
+          <div className="attach-grid">
+            <button type="button" className="attach-tile" onClick={() => { fileInputRef.current?.click(); setShowAttachPopup(false); }} style={{color: '#7e57c2'}}>
+              <i className="fa-solid fa-image" />
+              <span>Image</span>
+            </button>
+            <button type="button" className="attach-tile" onClick={() => { fileInputRef.current?.click(); setShowAttachPopup(false); }} style={{color: '#ff8a65'}}>
+              <i className="fa-solid fa-video" />
+              <span>Video</span>
+            </button>
+            <button type="button" className="attach-tile" onClick={() => { fileInputRef.current?.click(); setShowAttachPopup(false); }} style={{color: '#5c6bc0'}}>
+              <i className="fa-solid fa-file-lines" />
+              <span>Docs</span>
+            </button>
+            <button type="button" className="attach-tile" onClick={() => { fileInputRef.current?.click(); setShowAttachPopup(false); }} style={{color: '#ffb74d'}}>
+              <i className="fa-solid fa-headphones" />
+              <span>Audio</span>
+            </button>
+            <button type="button" className="attach-tile" onClick={() => { alert('Poll feature coming soon!'); setShowAttachPopup(false); }} style={{color: '#26a69a'}}>
+              <i className="fa-solid fa-chart-bar" />
+              <span>Poll</span>
+            </button>
+            <button type="button" className="attach-tile" onClick={() => { alert('Location feature coming soon!'); setShowAttachPopup(false); }} style={{color: '#ef5350'}}>
+              <i className="fa-solid fa-location-dot" />
+              <span>Location</span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <input 
         type="file" 
@@ -62,9 +96,9 @@ export default function MessageInput({ onSend, onTyping, disabled }) {
         className="icon-btn attach-btn" 
         type="button"
         disabled={disabled}
-        onClick={() => { setShowEmoji(false); fileInputRef.current?.click(); }}
+        onClick={() => { setShowAttachPopup(v => !v); setShowEmoji(false); }}
       >
-        <i className="fa-solid fa-paperclip" />
+        <i className={`fa-solid ${showAttachPopup ? 'fa-xmark' : 'fa-plus'}`} />
       </button>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flex: 1, gap: '10px' }}>
@@ -82,7 +116,7 @@ export default function MessageInput({ onSend, onTyping, disabled }) {
           />
         </div>
         <button type="submit" className="send-btn" disabled={disabled || !msg.trim()}>
-          <i className="fa-solid fa-paper-plane" />
+          <i className="fa-solid fa-arrow-right" />
         </button>
       </form>
     </div>

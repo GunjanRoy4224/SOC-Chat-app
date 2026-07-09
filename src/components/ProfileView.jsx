@@ -120,8 +120,6 @@ export default function ProfileView() {
             <i className="fa-solid fa-pen info-edit" />
           </div>
 
-          <div className="section-label" style={{ marginTop: '20px' }}>Account Info (Read-only)</div>
-
           <div className="info-row">
             <div className="info-icon" style={{ background: '#1a3a5c' }}><i className="fa-solid fa-at" /></div>
             <div className="info-body">

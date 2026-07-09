@@ -6,7 +6,6 @@ import ChatWindow from '../components/ChatWindow';
 import ProfileView from '../components/ProfileView';
 import SettingsView from '../components/SettingsView';
 import CallsView from '../components/CallsView';
-import CommunityView from '../components/CommunityView';
 
 export default function Home() {
   const { roomId } = useParams();
@@ -40,7 +39,6 @@ export default function Home() {
   const showProfile = currentView === 'profile';
   const showSettings = currentView === 'settings';
   const showCalls = currentView === 'calls';
-  const showCommunity = currentView === 'community';
 
   return (
     <div className="Pulse-app">
@@ -57,7 +55,7 @@ export default function Home() {
           flex: 1,
           flexDirection: 'column',
           minWidth: 0,
-          display: window.innerWidth <= 768 && !roomId && !showProfile && !showSettings && !showCalls && !showCommunity ? 'none' : 'flex' 
+          display: window.innerWidth <= 768 && !roomId && !showProfile && !showSettings && !showCalls ? 'none' : 'flex' 
         }}
       >
         {showProfile ? (
@@ -66,8 +64,6 @@ export default function Home() {
           <SettingsView onBack={() => handleViewChange('chats')} />
         ) : showCalls ? (
           <CallsView />
-        ) : showCommunity ? (
-          <CommunityView />
         ) : (
           <ChatWindow
             activeChatId={roomId}

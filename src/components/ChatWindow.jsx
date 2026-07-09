@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { decryptRoomKey, encryptMessage, decryptMessage, encryptFile } from '../lib/crypto';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { getLocalMessages, saveLocalMessages } from '../lib/storage';
+import pulseLogo from '../assets/pulse-logo.png';
 
 function getTime(dateStr) {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -123,6 +124,12 @@ export default function ChatWindow({ activeChatId, onBackClick }) {
           // Only update state if different length or force update. For simplicity, just update state.
           setMessages(decryptedMsgs);
           saveLocalMessages(activeChatId, decryptedMsgs);
+
+          // Mark unread messages as read in DB
+          const unreadIds = msgData.filter(m => !m.is_read && m.sender_id !== user.id).map(m => m.id);
+          if (unreadIds.length > 0) {
+             supabase.from('messages').update({ is_read: true }).in('id', unreadIds).then();
+          }
         }
       }
       setLoading(false);
@@ -288,10 +295,10 @@ export default function ChatWindow({ activeChatId, onBackClick }) {
 
   if (!activeChatId) {
     return (
-      <div className="welcome-view">
+      <div className="welcome-view" style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', borderLeft: '1px solid var(--border)' }}>
         <div className="welcome-center">
           <div className="welcome-ring">
-            <i className="fa-solid fa-message" />
+            <img src={pulseLogo} alt="Pulse" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
           </div>
           <h2 className="welcome-title">Pulse</h2>
           <p className="welcome-desc">
@@ -350,6 +357,7 @@ export default function ChatWindow({ activeChatId, onBackClick }) {
                  if (confirm('Clear history for everyone?')) {
                    await supabase.from('messages').delete().eq('room_id', activeChatId);
                    setMessages([]);
+                   saveLocalMessages(activeChatId, []);
                  }
                  setShowDropdown(false);
               }}>
